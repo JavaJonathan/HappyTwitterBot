@@ -1,0 +1,20 @@
+{
+  "name": "jsprojects",
+  "version": "1.0.0",
+  "description": "",
+  "main": "TurnipExchange.js",
+  "dependencies": {
+    "browserify": "^16.5.1",
+    "cheerio": "^1.0.0-rc.3",
+    "node-fetch": "^2.6.0",
+    "puppeteer": "^3.3.0",
+    "request": "^2.88.2",
+    "unirest": "^0.6.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
