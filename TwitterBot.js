@@ -10,7 +10,7 @@ let quoteCounter = 10
 let dailyQuote = ''
 let sentDailyTweet;
 let todaysDate = new Date()
-todaysDate.setDate(21)
+todaysDate.setDate(1)
 
 startTwitterBot()
 
@@ -36,10 +36,8 @@ async function startTwitterBot()
     }
     catch(e)
     {
-        console.log('Error! Restarting program in 1hr')
-        await waitToTweetAgain(page, 60) 
+        console.log('Error! Dying...')
         browser.close()
-        startTwitterBot()
     }
 }
 
