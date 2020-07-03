@@ -6,11 +6,10 @@ let username;
 let password;
 let alreadyAdded;
 let inappropiateContent;
-let quoteCounter = 1
+let quoteCounter;
 let dailyQuote = ''
 let sentDailyTweet;
 let todaysDate = new Date()
-todaysDate.setDate(2)
 
 startTwitterBot()
 
@@ -20,15 +19,16 @@ async function startTwitterBot()
     {       
         while(true)
         {
-            const browser = await puppeteer.launch({headless: false})
+            const browser = await puppeteer.launch({headless: true})
             const page = await browser.newPage()
 
+            await grabBotConfigs(page)
             await LogIn(page)
             await sendDailyTweet(page)
             await search(page, "depressed")
             await RetweetAllWithHappyQuote(page)
-            await browser.close() // we have to close the browser then wait so it doesnt eat all of my ram :(
-            await waitToTweetAgain(60) //6 hours           
+            await updateBotConfigs(page, browser)
+            await waitToTweetAgain(6) //6 hours           
         }
     }
     catch(e)
@@ -41,28 +41,54 @@ async function startTwitterBot()
 
 async function waitToTweetAgain(amountInHours)
 {
-    for(let timePassed = 0; timePassed < amountInHours; timePassed++)
+    for(let timePassed = 1; timePassed <= amountInHours; timePassed++)
     {
         let asyncTimeout = new Promise(resolve => setTimeout(resolve, 3600000)) //1 hour
-        await asyncTimeout.then(() => console.log(timePassed + ' minutes passed'))
+        await asyncTimeout.then(() => console.log(timePassed + ' hours passed'))
     }
 }
 
-async function grabCredsFromJson(page)
+async function grabBotConfigs(page)
 {
-    let jsonCredentials
+    let botConfigs
 
-    readWrite.readFile('password.json', (error, credentials) => 
+    readWrite.readFile('botConfigs.json', (error, configs) => 
     {
         if(error) throw error
 
-        jsonCredentials = JSON.parse(credentials)
+        botConfigs = JSON.parse(configs)
     })
 
     await page.waitFor(1000)
 
-    username = jsonCredentials[0].username
-    password = jsonCredentials[0].password
+    username = botConfigs[0].username
+    password = botConfigs[0].password
+    todaysDate.setDate(botConfigs[0].lastDayRan)
+    quoteCounter = botConfigs[0].quoteCounter
+}
+
+async function updateBotConfigs(page, browser)
+{
+    let botConfigs
+
+    readWrite.readFile('botConfigs.json', (error, configs) => 
+    {
+        if(error) throw error
+
+        botConfigs = JSON.parse(configs)
+    })
+
+    await page.waitFor(1000)
+
+    botConfigs[0].lastDayRan = todaysDate.getDate()
+    botConfigs[0].quoteCounter = quoteCounter
+
+    readWrite.writeFile('botConfigs.json', JSON.stringify(botConfigs), (error) => 
+    {
+        if(error) throw error
+    })
+
+    await browser.close() // we have to close the browser then wait so it doesnt eat all of my ram :(
 }
 
 async function RetweetAllWithHappyQuote(page)
@@ -164,7 +190,6 @@ async function TrackPeopleAlreadyTweeted(page, counter)
 
 async function LogIn(page)
 {
-    await grabCredsFromJson(page)
     await page.waitFor(1000)
 
     await page.goto(`https://twitter.com/login`, { waitUntil: 'networkidle2' })
