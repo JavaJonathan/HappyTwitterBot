@@ -6,47 +6,45 @@ let username;
 let password;
 let alreadyAdded;
 let inappropiateContent;
-let quoteCounter = 10
+let quoteCounter = 1
 let dailyQuote = ''
 let sentDailyTweet;
 let todaysDate = new Date()
-todaysDate.setDate(1)
+todaysDate.setDate(2)
 
 startTwitterBot()
 
 async function startTwitterBot()
-{
-    
-    const browser = await puppeteer.launch({headless: true})
-    const page = await browser.newPage()
-    
+{          
     try
-    {
-        await LogIn(page)
-            
+    {       
         while(true)
         {
+            const browser = await puppeteer.launch({headless: false})
+            const page = await browser.newPage()
+
+            await LogIn(page)
             await sendDailyTweet(page)
-            await page.waitFor(2000)
             await search(page, "depressed")
-            await page.waitFor(2000)
             await RetweetAllWithHappyQuote(page)
-            await waitToTweetAgain(page, 240) //4 hours           
+            await browser.close() // we have to close the browser then wait so it doesnt eat all of my ram :(
+            await waitToTweetAgain(60) //6 hours           
         }
     }
     catch(e)
     {
-        console.log('Error! Dying...')
-        browser.close()
+        console.log(`${e.toString()} Dying...`)
+        //we call this to ensure the browser is closed, will throw an addtional error if already closed
+        await browser.close()
     }
 }
 
-async function waitToTweetAgain(page, amountInMinutes)
+async function waitToTweetAgain(amountInHours)
 {
-    for(let timePassed = 0; timePassed < amountInMinutes; timePassed++)
+    for(let timePassed = 0; timePassed < amountInHours; timePassed++)
     {
-        console.log(timePassed + ' minutes passed')
-        await page.waitFor(60000) //1 minute
+        let asyncTimeout = new Promise(resolve => setTimeout(resolve, 3600000)) //1 hour
+        await asyncTimeout.then(() => console.log(timePassed + ' minutes passed'))
     }
 }
 
@@ -176,16 +174,17 @@ async function LogIn(page)
     await page.type('input[name="session[password]"]',`${password}`, { delay: 25 })
     await page.waitFor(2000)
     await page.click('div[data-testid="LoginForm_Login_Button"]')
-    await page.waitFor(3000)
+    await page.waitFor(5000)
 }
 
 //we need this so we do not mention everyone in the thread and get flagged for spam
 async function RemoveAllUnwantedUsersFromThread(page)
 {
-    await page.click('div[class="css-18t94o4 css-901oao r-1re7ezh r-16y2uox r-1qd0xha r-a023e6 r-16dba41 r-ad9z0x r-bcqeeo r-19yat4t r-glunga r-qvutc0"]')
+    let buttons = await page.$$('div[role="button"]')
+    await buttons[1].click()
     await page.waitFor(3000)
-    let unwantedUsers = await page.$$('div[data-testid="UserCell"]')
 
+    let unwantedUsers = await page.$$('div[data-testid="UserCell"]')
     let users = unwantedUsers.length
 
     console.log("user count: " + users)
@@ -196,7 +195,7 @@ async function RemoveAllUnwantedUsersFromThread(page)
         await page.waitFor(2000)
     }
 
-    await page.click('div[class="css-18t94o4 css-1dbjc4n r-urgr8i r-42olwf r-sdzlij r-1phboty r-rs99b7 r-1w2pmg r-1vsu8ta r-aj3cln r-1ny4l3l r-1fneopy r-o7ynqc r-6416eg r-lrvibr"')
+    await page.click('div[class="css-18t94o4 css-1dbjc4n r-urgr8i r-42olwf r-sdzlij r-1phboty r-rs99b7 r-1w2pmg r-1vsu8ta r-aj3cln r-1ny4l3l r-1fneopy r-o7ynqc r-6416eg r-lrvibr"]')
     await page.waitFor(2000)
 }
 
@@ -224,7 +223,7 @@ async function sendDailyTweet(page)
     await page.type('div[aria-label="Tweet text"]', `${dailyQuote}`, { delay: 25 }) 
     await page.waitFor(2000)
     await page.click('div[data-testid="tweetButtonInline"]')
-    await page.waitFor(2000)    
+    await page.waitFor(5000)    
 }
 
 async function dailyTweetSent()
@@ -242,13 +241,13 @@ async function dailyTweetSent()
 
 function insertHappyQuote()
 {
-    if(quoteCounter == 40) { quoteCounter = -1 } 
+    if(quoteCounter == 45) { quoteCounter = -1 } 
     quoteCounter = quoteCounter + 1
     switch(quoteCounter)
     {
         case 0: return "#HappyBot Reminder: You matter. I am so happy I get to share the world with you."
         case 1: return "Friendly Reminder: You're a gift to those around you."
-        case 2: return "Remember, Even the things you don’t like about yourself are beautiful."
+        case 2: return "#HappyBot Reminder: Life is tough, but so are you."
         case 3: return "You’re worthy of all the good things that will be coming to you."
         case 4: return "Friendly Reminder: You are so special to everyone you know."
         case 5: return "If you haven't heard this yet today, you matter and I'm proud of you."
@@ -260,7 +259,7 @@ function insertHappyQuote()
         case 11: return "Remember, you are appreciated."
         case 12: return "Friendly Reminder: You are loved and cherished."
         case 13: return "#HappyBot Reminder: You bring out the best in other people."
-        case 14: return "You are loved and matter in the world."
+        case 14: return "If you haven't heard this yet today, you are loved and matter in the world."
         case 15: return "You are seeing this tweet because the universe cares about you and wants you to know you matter."
         case 16: return "#HappyBot Reminder: You’re amazing!"
         case 17: return "Friendly Reminder, you have positively effected more lives than you think."
@@ -286,8 +285,12 @@ function insertHappyQuote()
         case 37: return "Gentle Reminder: You are a good person."
         case 38: return "Gentle Note: You are enough, just the way you are."
         case 39: return "Gentle Note: You are talented and intelligent."
-        case 40: return "Gentle Reminder: I am proud of you."
+        case 40: return "Gentle Reminder: I am proud of you. I hope you are proud of you too."
         case 41: return "#HappyBot Reminder: Whatever challenges come your way, you can overcome them."
+        case 42: return "#HappyBot Reminder: Stay positive, things will get better."
+        case 43: return "Remember, times might be hard, but they will pass. Stay strong."
+        case 44: return "Gentle Reminder: Believe in yourself, you are stronger than your challenges."
+        case 45: return "If you haven't heard this yet today, thanks for being you!"
     }
 }
 
