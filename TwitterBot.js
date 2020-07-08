@@ -111,22 +111,25 @@ async function RetweetAllWithHappyQuote(page)
 
         await page.waitFor(3000)
 
-        if( !alreadyAdded && !inappropiateContent) 
+        if( !alreadyAdded ) 
         {
             await page.waitFor(1000)
             await page.click('div[aria-label="Reply"]')
             await page.waitFor(3000)
 
             await CheckIfInappropiate(page)
-            console.log('Inappropiate Content: ' + inappropiateContent)
-            await page.waitFor(2000)
+            if(!inappropiateContent)
+            {
+                console.log('Inappropiate Content: ' + inappropiateContent)
+                await page.waitFor(2000)
 
-            await RemoveAllUnwantedUsersFromThread(page)
-            await page.type('div[aria-label="Tweet text"]', `${insertHappyQuote()}`, {delay: 25})
-            await page.waitFor(1000)
+                await RemoveAllUnwantedUsersFromThread(page)
+                await page.type('div[aria-label="Tweet text"]', `${insertHappyQuote()}`, {delay: 25})
+                await page.waitFor(1000)
 
-            await page.click('div[data-testid="tweetButton"]')
-            await page.waitFor(1000)
+                await page.click('div[data-testid="tweetButton"]')
+                await page.waitFor(1000)
+            }
         }
         await page.waitFor(60000)
         await page.goBack()
@@ -248,7 +251,9 @@ async function sendDailyTweet(page)
     await page.type('div[aria-label="Tweet text"]', `${dailyQuote}`, { delay: 25 }) 
     await page.waitFor(2000)
     await page.click('div[data-testid="tweetButtonInline"]')
-    await page.waitFor(5000)    
+    await page.waitFor(5000)  
+
+    console.log('Daily tweet sent')  
 }
 
 async function dailyTweetSent()
@@ -268,6 +273,7 @@ function insertHappyQuote()
 {
     if(quoteCounter == 45) { quoteCounter = -1 } 
     quoteCounter = quoteCounter + 1
+    console.log('QuoteCounter: ' + quoteCounter)
     switch(quoteCounter)
     {
         case 0: return "#HappyBot Reminder: You matter. I am so happy I get to share the world with you."
